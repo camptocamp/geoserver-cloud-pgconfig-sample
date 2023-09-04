@@ -1,0 +1,116 @@
+version: "3.8"
+
+volumes:
+  # volume for postgresql data, used to store the geoserver config through pgsqlconfig backend
+  pgconfig_data:
+  # volume for sample postgis data
+  postgis_data:
+  # volume for application externalized configuration yaml files
+  spring-config:
+    driver_opts:
+      type: none
+      o: bind
+      device: $PWD/config
+  
+services:
+  pgconfig:
+    image: postgres:15
+    shm_size: 2g
+    environment:
+      POSTGRES_DB: pgconfig
+      POSTGRES_USER: pgconfig
+      POSTGRES_PASSWORD: pgconfig
+    volumes:
+      - pgconfig_data:/var/lib/postgresql/data
+    ports:
+      - 54322:5432
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 4G
+  postgis:
+    image: postgis/postgis:latest
+    environment:
+      POSTGRES_DB: postgis
+      POSTGRES_USER: postgis
+      POSTGRES_PASSWORD: postgis
+      POSTGIS_GDAL_ENABLED_DRIVERS: ENABLE_ALL
+    volumes:
+      - postgis_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+  gdal:
+    image: osgeo/gdal:latest
+    volumes:
+      - ./sample_data:/sample_data
+    deploy:
+      mode: replicated
+      replicas: 0
+    
+  rabbitmq:
+    image: rabbitmq:3.11-management
+    user: 1000:1000
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+
+  gateway:
+    image: geoservercloud/geoserver-cloud-gateway:${TAG}
+    user: 1000:1000
+    environment:
+      SPRING_PROFILES_ACTIVE: "standalone"
+    volumes:
+      - ./config/gateway-service.yml:/etc/gscloud/gateway-service.yml
+    ports:
+      - 9090:8080
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 1G
+
+  wms:
+    extends:
+      file: templates.yml
+      service: geoserver
+    image: geoservercloud/geoserver-cloud-wms:${TAG}
+    depends_on:
+      - rabbitmq
+      - postgis
+      - pgconfig
+
+  wfs:
+    extends:
+      file: templates.yml
+      service: geoserver
+    image: geoservercloud/geoserver-cloud-wfs:${TAG}
+    depends_on:
+      - rabbitmq
+      - postgis
+      - pgconfig
+
+  rest:
+    extends:
+      file: templates.yml
+      service: geoserver
+    image: geoservercloud/geoserver-cloud-rest:${TAG}
+    depends_on:
+      - rabbitmq
+      - postgis
+      - pgconfig
+
+  webui:
+    extends:
+      file: templates.yml
+      service: geoserver
+    image: geoservercloud/geoserver-cloud-webui:${TAG}
+    depends_on:
+      - rabbitmq
+      - postgis
+      - pgconfig

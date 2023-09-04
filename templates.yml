@@ -1,0 +1,20 @@
+version: "3.7"
+
+services:
+  geoserver:
+    user: 1000:1000 # set the userid:groupid the container runs as
+    environment:
+      SPRING_PROFILES_ACTIVE: "standalone,pgconfig"
+      SPRING_CONFIG_ADDITIONAL_LOCATION: /etc/gscloud/values.yml
+      JAVA_OPTS: -XX:MaxRAMPercentage=80 -XshowSettings:system 
+    volumes:
+      - ./config/values.yml:/etc/gscloud/values.yml
+      - ./config/jndi.yml:/etc/gscloud/jndi.yml
+      - ./aws_credentials:/.aws/credentials
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G

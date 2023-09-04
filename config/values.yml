@@ -1,0 +1,7 @@
+backend.pgconfig: true
+pgconfig.jndi-name: java:comp/env/jdbc/pgconfig
+pgconfig.schema: pgconfig
+
+gwc.enabled: false
+
+logging.level.org.springframework.retry.support: info
