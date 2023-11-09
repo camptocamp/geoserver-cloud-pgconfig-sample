@@ -8,9 +8,9 @@ services:
       SPRING_CONFIG_ADDITIONAL_LOCATION: /etc/gscloud/values.yml
       JAVA_OPTS: -XX:MaxRAMPercentage=80 -XshowSettings:system 
     volumes:
-      - ./config/values.yml:/etc/gscloud/values.yml
-      - ./config/jndi.yml:/etc/gscloud/jndi.yml
-      - ./aws_credentials:/.aws/credentials
+      - $PWD/config/values.yml:/etc/gscloud/values.yml
+      - $PWD/config/jndi.yml:/etc/gscloud/jndi.yml
+      - $PWD/aws_credentials:/.aws/credentials
     deploy:
       mode: replicated
       replicas: 1
